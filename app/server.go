@@ -40,12 +40,16 @@ func do(conn net.Conn, dir string) {
 		reponse := fmt.Sprintf("HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: %d\r\n\r\n%s", len(v), v)
 		conn.Write([]byte(reponse))
 	} else if strings.Contains(path[1], "/files/") {
-		filename := strings.Split(path[1], "/files/")[1]
-		content, err := os.ReadFile(dir + "/" + filename)
-		body := string(content)
+		filename := strings.Split(path[1], "/files/")[1] // donkey_yikes_dumpty_donkey
+		fmt.Printf(dir + "/" + filename)
+		content, err := os.ReadFile(dir + "/" + filename)      // /tmp/data/codecrafters.io/http-server-tester/ + / + donkey_yikes_dumpty_donkey
 		if os.IsNotExist(err) {
 			conn.Write([]byte("HTTP/1.1 404 Not Found\r\n\r\n"))
 		} else {
+			// content, err := os.ReadFile(dir + "/" + filename)
+			// check(err)
+			// body := string(content)
+			body := string(content)
 			response := fmt.Sprintf("HTTP/1.1 200 OK\r\nContent-Type: application/octet-stream\r\nContent-Length: %d\r\n\r\n%s", len(body), body)
 			conn.Write([]byte(response))
 		}
