@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"log"
 
@@ -57,7 +58,9 @@ func do(conn net.Conn, dir string) {
 
 func main() {
 
-	dir := os.Args[2]
+	var dir string
+	flag.StringVar(&dir, "directory", "", "hello")
+	flag.Parse()
 
 	l, err := net.Listen("tcp", "0.0.0.0:4221")
 	if err != nil {
