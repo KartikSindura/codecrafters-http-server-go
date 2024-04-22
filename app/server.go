@@ -2,7 +2,9 @@ package main
 
 import (
 	"fmt"
+	"io/ioutil"
 	"log"
+
 	// Uncomment this block to pass the first stage
 	"net"
 	"os"
@@ -14,12 +16,16 @@ func get_header(s string) (string, string) {
 	return line[0], line[1][1:]
 }
 
-func do(conn net.Conn) {
+func check(e error) {
+	if e != nil {
+		log.Fatal(e.Error())
+	}
+}
+
+func do(conn net.Conn, dir string) {
 	buf := make([]byte, 1024)
 	_, err := conn.Read(buf)
-	if err != nil {
-		log.Fatal(err.Error())
-	}
+	check(err)
 	res := string(buf)
 	lines := strings.Split(res, "\r\n")
 	path := strings.Split(lines[0], " ")
@@ -33,6 +39,17 @@ func do(conn net.Conn) {
 		_, v := get_header(lines[2])
 		reponse := fmt.Sprintf("HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: %d\r\n\r\n%s", len(v), v)
 		conn.Write([]byte(reponse))
+	} else if strings.Contains(path[1], "/files/") {
+		filename := strings.Split(path[1], "/files/")[1]
+		content, err := os.ReadFile(dir + "/" + filename)
+		body := string(content)
+		if os.IsNotExist(err) {
+			conn.Write([]byte("HTTP/1.1 404 Not Found\r\n\r\n"))
+		} else {
+			response := fmt.Sprintf("HTTP/1.1 200 OK\r\nContent-Type: application/octet-stream\r\nContent-Length: %d\r\n\r\n%s", len(body), body)
+			conn.Write([]byte(response))
+		}
+
 	} else {
 		conn.Write([]byte("HTTP/1.1 404 Not Found\r\n\r\n"))
 	}
@@ -40,6 +57,8 @@ func do(conn net.Conn) {
 }
 
 func main() {
+
+	dir := os.Args[2]
 
 	l, err := net.Listen("tcp", "0.0.0.0:4221")
 	if err != nil {
@@ -54,6 +73,6 @@ func main() {
 			os.Exit(1)
 		}
 
-		go do(conn)
+		go do(conn, dir)
 	}
 }
