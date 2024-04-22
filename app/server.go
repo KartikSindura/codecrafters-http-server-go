@@ -14,12 +14,16 @@ func do(conn net.Conn) {
 	_, err := conn.Read(buf)
 	if err != nil {
 		log.Fatal(err.Error())
-	}
+	}	
 	res := string(buf)
 	lines := strings.Split(res, "\r\n")
 	path := strings.Split(lines[0], " ")
 	if path[1] == "/" {
 		conn.Write([]byte("HTTP/1.1 200 OK\r\n\r\n"))
+	} else if strings.Contains(path[1], "/echo/") {
+		ans := strings.Split(path[1], "/echo/")[1]
+		reponse := fmt.Sprintf("HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: %d\r\n\r\n%s", len(ans), ans)
+		conn.Write([]byte(reponse))
 	} else {
 		conn.Write([]byte("HTTP/1.1 404 Not Found\r\n\r\n"))
 	}
