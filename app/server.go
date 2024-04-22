@@ -24,6 +24,7 @@ func check(e error) {
 }
 
 func do(conn net.Conn, dir string) {
+	defer conn.Close()
 	buf := make([]byte, 1024)
 	_, err := conn.Read(buf)
 	check(err)
