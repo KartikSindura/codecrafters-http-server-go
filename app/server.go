@@ -4,6 +4,7 @@ import (
 	"flag"
 	"fmt"
 	"log"
+	"path/filepath"
 
 	// Uncomment this block to pass the first stage
 	"net"
@@ -40,17 +41,15 @@ func do(conn net.Conn, dir string) {
 		reponse := fmt.Sprintf("HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: %d\r\n\r\n%s", len(v), v)
 		conn.Write([]byte(reponse))
 	} else if strings.Contains(path[1], "/files/") {
-		filename := strings.Split(path[1], "/files/")[1] // donkey_yikes_dumpty_donkey
-		fmt.Printf(dir + "/" + filename)
-		_, err := os.Stat(dir + "/" + filename)      // /tmp/data/codecrafters.io/http-server-tester/ + / + donkey_yikes_dumpty_donkey
-		if os.IsNotExist(err) {
-			conn.Write([]byte("HTTP/1.1 404 Not Found\r\n\r\n"))
-		} else {
-			content, err := os.ReadFile(dir + "/" + filename)
-			check(err)
+		filename := strings.Split(path[1], "/files/")[1]
+		absFilePath := filepath.Join(dir, filename)
+		if _, err := os.Stat(absFilePath); err == nil {
+			content, _ := os.ReadFile(absFilePath)
 			body := string(content)
 			response := fmt.Sprintf("HTTP/1.1 200 OK\r\nContent-Type: application/octet-stream\r\nContent-Length: %d\r\n\r\n%s", len(body), body)
 			conn.Write([]byte(response))
+		} else {
+			conn.Write([]byte("HTTP/1.1 404 Not Found\r\n\r\n"))
 		}
 
 	} else {
